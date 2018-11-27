@@ -106,7 +106,32 @@ argmax(Lst, Ind) :-
   max_list(Lst, Max),
   nth0(Ind, Lst, Max).
 
-% choose based on values in Prob (return index)
-choice(Probs, Ind) :-
-  
+% turn discrete probabilities to cumulative probabilities
+cum_sum(X, T) :-
+  cum_sum(X, 0, T).
 
+cum_sum([], _, []).
+cum_sum([X|R], S, [T|R2]) :- 
+  T is S+X,
+  cum_sum(R, T, R2).
+
+% choose based on values in Probs (return index)
+choice(Probs, Ind) :- 
+  random(Rand),
+  cum_sum(Probs, CumProbs),
+  choice(CumProbs, Rand, 0, 0, Ind).
+
+% first arg is a cumulative discrete probability distribution
+choice([], _, _, IA, IA).
+choice([H|_], Rand, SA, IA, IA) :- 
+  SA =< Rand, 
+  Rand < H+SA.
+
+choice([H|R], Rand, SA, IA, Ind) :-
+  Rand > H+SA,
+  SA2 is H+SA,
+  IA2 is IA+1,
+  choice(R, Rand, SA2, IA2, Ind).
+
+%choice([H|R], SA, IA, Ind) :- H
+%choice(A) :- 1 =< A, A < 5.
