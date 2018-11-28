@@ -9,7 +9,7 @@
 % city(name, x, y, pheromone_level)
 city('Vancouver', 3, 5). % 0
 city('Montreal', 7, 9). % 1
-city('Toronto', 2, 8). % 2 
+city('Toronto', 2, 8). % 2
 city('Calgary', 8, 11). % 3
 city('Ottawa', 9, 13). % 4
 
@@ -17,7 +17,7 @@ city('Ottawa', 9, 13). % 4
 %[3, 0, 1]
 %[4, 1, 0]]
 
-%select_city(start_city, end_city) 
+%select_city(start_city, end_city)
 %start_city == 0
 %end_city in [1,2]
 
@@ -67,14 +67,14 @@ city('Ottawa', 9, 13). % 4
 
 
 %%%% HELPER FUNCTIONS %%%%
-% replace Ith item in L with E (this is K) 
+% replace Ith item in L with E (this is K)
 replace(I, L, E, K) :-
   nth1(I, L, _, R),
   nth1(I, K, E, R).
 
 % fancy schmancy matrix creation function
 make_sq_zero_matrix(N, Matrix) :-
-    make_matrix(N, N, Matrix).
+    make_zero_matrix(N, N, Matrix).
 
 make_zero_matrix(_, N, []) :-
     N =< 0,
@@ -82,7 +82,7 @@ make_zero_matrix(_, N, []) :-
 make_zero_matrix(M, N, [R|Rs]) :-
     make_zero_list(M, R),
     N2 is N - 1,
-    make_matrix(M, N2, Rs).
+    make_zero_matrix(M, N2, Rs).
 
 % make list of zeros
 make_zero_list(N, []) :-
@@ -91,12 +91,29 @@ make_zero_list(N, []) :-
 make_zero_list(N, [0|Rest]) :-
     N > 0,
     N2 is N - 1,
-    make_list(N2, Rest).
+    make_zero_list(N2, Rest).
 
 % starting pheromone matrix
 % make_sq_zero_matrix(num_cities, Pher_matr)
 
 % TODO adjacency matrix
+% Create adjacency matrix of distances
+% Input a list of (x,y) coordinates
+% Outputs an adjacency AM
+% adjacency_matrix([(3,2),(4,5),(6,7)],[(3,2),(4,5),(6,7)], AM).
+adjacency_matrix([], _, []).
+adjacency_matrix([H|T], Coords, [L|AM]) :-
+  distance_list(H, Coords, L),
+  adjacency_matrix(T, Coords, AM).
+
+% Creates a distance list between the current coordinate with the rest of the list
+distance_list((_,_), [], []).
+distance_list((X1,Y1), [(X2,Y2)|T], [D|L]) :-
+  dist((X1,Y1), (X2,Y2), D),
+  distance_list((X1,Y1), T, L).
+
+% distance squared
+dist((X1, Y1), (X2, Y2), D) :- D is (X1-X2)^2+(Y1-Y2)^2.
 
 % distance squared
 dist2(city(_, X1, Y1), city(_, X2, Y2), D) :- D is (X1-X2)^2+(Y1-Y2)^2.
@@ -111,20 +128,20 @@ cum_sum(X, T) :-
   cum_sum(X, 0, T).
 
 cum_sum([], _, []).
-cum_sum([X|R], S, [T|R2]) :- 
+cum_sum([X|R], S, [T|R2]) :-
   T is S+X,
   cum_sum(R, T, R2).
 
 % choose based on values in Probs (return index)
-choice(Probs, Ind) :- 
+choice(Probs, Ind) :-
   random(Rand),
   cum_sum(Probs, CumProbs),
   choice(CumProbs, Rand, 0, 0, Ind).
 
 % first arg is a cumulative discrete probability distribution
 choice([], _, _, IA, IA).
-choice([H|_], Rand, SA, IA, IA) :- 
-  SA =< Rand, 
+choice([H|_], Rand, SA, IA, IA) :-
+  SA =< Rand,
   Rand < H+SA.
 
 choice([H|R], Rand, SA, IA, Ind) :-
