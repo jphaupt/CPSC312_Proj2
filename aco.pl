@@ -51,33 +51,84 @@ city('Ottawa', 9, 13). % 4
 %
 %    next_city = numpy.choice(unvisited, 1, transition_probabilities)
 
+% unvisited cities (indices), pheromone matrix, distance so far, current city, adjacency matrix
+% Paths is list of paths (as tuples) so far traversed
+%ant_tour(Unvisited, PherMatr, Dist, Current, AM, Paths)
+%ant_tour([], _, _, _, _).
+%ant_tour([H|R], _, _, 
+
+% assume: head of list in this function is the current city (the colony)
+% tour for a single ant
+% NOTE Visited is in reverse order!
+ant_tour([H|Unvisited], PherMatr, AdjMat, Dist, Visited) :-
+  ant_tour(Unvisited, PherMatr, AdjMat, H, 0, Dist, [H], Visited).
+
+ant_tour([], _, _, _, D, D, N, N).
+
+ant_tour(Unvisited, PherMatr, AdjMat, Current, AccD, Dist, Acc, Visited) :-
+  trans_prob(Unvisited, PherMatr, AdjMat, Current, Probs),
+  choice(Probs, Ind), 
+  nth0(Ind, Unvisited, Next, R), % delete and store Ind^th element
+  at(AdjMat, Current, Next, D),
+  NewDist is D+AccD,
+  ant_tour(R, PherMatr, AdjMat, Next, NewDist, Dist, [Next|Acc], Visited).
+
 
 %%%% HELPER FUNCTIONS %%%%
+% calculate transition probabilities based on pheromones and distance
+% TODO I'm not 100% sure if this is correct (might be reversed results)
+trans_prob(Lst, PherMatr, AdjMat, Current, Probs) :- 
+  numerators(Lst, PherMatr, AdjMat, Current, Numerators), % get numerators
+  sumlist(Numerators, Denom), % get denominator
+  maplist(divide(Denom), Numerators, Probs).
+
+% helper function for maplist
+divide(V, A, B) :- B is A/V.
+
+% tmp TODO
+% make_sq_ones_matrix(3, ph).
+% adjacency_matrix([(1,2), (0,0), (5,2)], d).
+% [0,1,2], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[0, 5, 16], [5, 0, 29], [16, 29, 0]]
+
+% helper function for transmission probabilities
+% assuming Current is *not* in the list
+numerators(Lst, PherMatr, AdjMat, Current, Numerators) :-
+  numerators(Lst, PherMatr, AdjMat, Current, [], Numerators).
+
+numerators([], _, _, _, N, N).
+
+numerators([H|T], PherMatr, AdjMat, Current, Acc, Numerators) :- 
+  at(PherMatr, Current, H, Tij),
+  at(AdjMat, Current, H, Dij), 
+  NH is Tij/Dij,
+  numerators(T, PherMatr, AdjMat, Current, [NH|Acc], Numerators).
+
+
 % replace Ind^th item in Old with E (resulting list is New)
 replace(Ind, Old, E, New) :-
   nth0(Ind, Old, _, R),
   nth0(Ind, New, E, R).
 
 % fancy schmancy matrix creation function
-make_sq_zero_matrix(N, Matrix) :-
-    make_zero_matrix(N, N, Matrix).
+make_sq_ones_matrix(N, Matrix) :-
+    make_ones_matrix(N, N, Matrix).
 
-make_zero_matrix(_, N, []) :-
+make_ones_matrix(_, N, []) :-
     N =< 0,
     !. % ??? TODO
-make_zero_matrix(M, N, [R|Rs]) :-
-    make_zero_list(M, R),
+make_ones_matrix(M, N, [R|Rs]) :-
+    make_ones_list(M, R),
     N2 is N - 1,
-    make_zero_matrix(M, N2, Rs).
+    make_ones_matrix(M, N2, Rs).
 
 % make list of zeros
-make_zero_list(N, []) :-
+make_ones_list(N, []) :-
     N =< 0,
     !.
-make_zero_list(N, [0|Rest]) :-
+make_ones_list(N, [1|Rest]) :-
     N > 0,
     N2 is N - 1,
-    make_zero_list(N2, Rest).
+    make_ones_list(N2, Rest).
 
 % Update pheromone levels after a tour
 % Input:  The first variable is the list cities visited in the tour
