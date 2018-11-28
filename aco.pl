@@ -67,10 +67,10 @@ city('Ottawa', 9, 13). % 4
 
 
 %%%% HELPER FUNCTIONS %%%%
-% replace Ith item in L with E (this is K)
-replace(I, L, E, K) :-
-  nth1(I, L, _, R),
-  nth1(I, K, E, R).
+% replace Ind^th item in Old with E (resulting list is New)
+replace(Ind, Old, E, New) :-
+  nth0(Ind, Old, _, R),
+  nth0(Ind, New, E, R).
 
 % fancy schmancy matrix creation function
 make_sq_zero_matrix(N, Matrix) :-
@@ -96,10 +96,11 @@ make_zero_list(N, [0|Rest]) :-
 % starting pheromone matrix
 % make_sq_zero_matrix(num_cities, Pher_matr)
 
-% TODO adjacency matrix
 % Create adjacency matrix of distances
 % Input a list of (x,y) coordinates
 % Outputs an adjacency AM
+adjacency_matrix(Coords, AM) :- adjacency_matrix(Coords, Coords, AM).
+
 % adjacency_matrix([(3,2),(4,5),(6,7)],[(3,2),(4,5),(6,7)], AM).
 adjacency_matrix([], _, []).
 adjacency_matrix([H|T], Coords, [L|AM]) :-
