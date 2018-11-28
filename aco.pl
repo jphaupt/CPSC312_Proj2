@@ -3,8 +3,6 @@
 :- use_module(library(random)).
 %:- use_module(library(plrand)).
 
-
-
 % Represents the city, (x,y) coordinates
 % city(name, x, y, pheromone_level)
 city('Vancouver', 3, 5). % 0
@@ -29,16 +27,6 @@ city('Ottawa', 9, 13). % 4
   % Find distance between CurrentCity and all other cities -- find minimum or if
   % then use probability
 
-% Need to somehow represent ants
-% also need to represent the current city
-%ant :: {
-%  city('Vancouver', 3, 5) &
-%  distance(0) &
-%  visited([])
-%}.
-
-
-
 % pheromone deposit
 %pher_dep(ant(city(N, _, _, P), _, _), city(N, _, _, P+1)).
 
@@ -62,8 +50,6 @@ city('Ottawa', 9, 13). % 4
 %        transition_probabilities.append(p_ij)
 %
 %    next_city = numpy.choice(unvisited, 1, transition_probabilities)
-
-
 
 
 %%%% HELPER FUNCTIONS %%%%
@@ -92,6 +78,32 @@ make_zero_list(N, [0|Rest]) :-
     N > 0,
     N2 is N - 1,
     make_zero_list(N2, Rest).
+
+% Update pheromone levels after a tour
+% Input:  The first variable is the list cities visited in the tour
+%         PherMat is the current pheromone matrix
+%         UpdatedPherMat is the updated pheromone matrix
+update_pheromone([X,Y], PherMat, UpdatedPherMat) :-
+  at(PherMat, X, Y, Val),
+  nth0(X, PherMat, XRow),
+  NewVal is Val+1,
+  replace(Y, XRow, NewVal, UpdatedRow),
+  replace(X, PherMat, UpdatedRow, UpdatedPherMat).
+
+update_pheromone([X,Y|T], PherMat, UpdatedPherMat) :-
+  at(PherMat, X, Y, Val),
+  nth0(X, PherMat, XRow),
+  NewVal is Val+1,
+  replace(Y, XRow, NewVal, UpdatedRow),
+  replace(X, PherMat, UpdatedRow, UPM),
+  update_pheromone([Y|T], UPM, UpdatedPherMat).
+
+% Returns the value at specific element
+% 0_based indexing
+% Val is the value at that specific element
+at(Mat, Row, Col, Val) :-
+  nth0(Row, Mat, ARow),
+  nth0(Col, ARow, Val).
 
 % starting pheromone matrix
 % make_sq_zero_matrix(num_cities, Pher_matr)
