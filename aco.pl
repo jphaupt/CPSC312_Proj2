@@ -1,61 +1,12 @@
 % https://www.aransena.com/blog/2015/12/22/python-ant-colony-optimization
 
 :- use_module(library(random)).
-%:- use_module(library(plrand)).
-
-% Represents the city, (x,y) coordinates
-% city(name, x, y, pheromone_level)
-city('Vancouver', 3, 5). % 0
-city('Montreal', 7, 9). % 1
-city('Toronto', 2, 8). % 2
-city('Calgary', 8, 11). % 3
-city('Ottawa', 9, 13). % 4
-
-%[[0, 3, 4]
-%[3, 0, 1]
-%[4, 1, 0]]
-
-%select_city(start_city, end_city)
-%start_city == 0
-%end_city in [1,2]
-
-%city('YVR', 3, 5, P+1) :- ant_visit(city('YVR', 3, 5, P), true)
-
-% assume only one ant for now
-
-%find_next_city(Ant, CurrentCity, Visited, Path) :-
-  % Find distance between CurrentCity and all other cities -- find minimum or if
-  % then use probability
-
-% pheromone deposit
-%pher_dep(ant(city(N, _, _, P), _, _), city(N, _, _, P+1)).
-
-
-%tour_ant(lst
-
-%tour_all(
-
-%aco_tsp(
-
-% for ant in ants:
-%    current_city = ant.current_city
-%    transition_probabilities=[]
-%    for city in unvisited:
-%        denominator = 0
-%        numerator = (pow(tau[current_city][city],alpha)*(eta[current_city][city], beta))
-%        for city in unvisited:
-%            denominator += (pow(tau[current_city][city],alpha)*(eta[current_city][city], beta))
-%
-%        p_ij = numerator/float(denominator)
-%        transition_probabilities.append(p_ij)
-%
-%    next_city = numpy.choice(unvisited, 1, transition_probabilities)
 
 % unvisited cities (indices), pheromone matrix, distance so far, current city, adjacency matrix
 % Paths is list of paths (as tuples) so far traversed
 %ant_tour(Unvisited, PherMatr, Dist, Current, AM, Paths)
 %ant_tour([], _, _, _, _).
-%ant_tour([H|R], _, _, 
+%ant_tour([H|R], _, _,
 
 % ant colony optimisation
 % Cities is a list of coordinate tuples, e.g. [(0,1), (0,0), (3,1)]
@@ -67,18 +18,16 @@ aco(Cities, N, NumAnts, FinalPherMatr, FinalPaths, FinalDists) :-
   make_sq_ones_matrix(L, CurrPherMatr),
   aco(Cities, N, AdjMat, NumAnts, CurrPherMatr, FinalPherMatr, FinalPaths, FinalDists).
 
-aco(Cities, N, AdjMat, NumAnts, P, P, FinalPaths, FinalDists) :- 
+aco(Cities, N, AdjMat, NumAnts, P, P, FinalPaths, FinalDists) :-
   length(Cities, L),
-  make_dec_list(L, RevCityInds),
-  reverse(RevCityInds, CityInds),
+  make_inc_list(L, CityInds),
   full_tour(CityInds, NumAnts, P, AdjMat, FinalPaths, FinalDists),
   N =< 0,
   !.
 
 aco(Cities, N, AdjMat, NumAnts, PherMatr, FinalPherMatr, FinalPaths, FinalDists) :-
   length(Cities, L),
-  make_dec_list(L, RevCityInds),
-  reverse(RevCityInds, CityInds),
+  make_inc_list(L, CityInds),
   full_tour(CityInds, NumAnts, PherMatr, AdjMat, Paths, Dists),
   update_pheromone_full(Paths, Dists, PherMatr, NewPherMatr),
   NewN is N-1,
@@ -110,7 +59,7 @@ ant_tour([], _, _, _, D, D, N, N).
 
 ant_tour(Unvisited, PherMatr, AdjMat, Current, AccD, Dist, Acc, Visited) :-
   trans_prob(Unvisited, PherMatr, AdjMat, Current, Probs),
-  choice(Probs, Ind), 
+  choice(Probs, Ind),
   nth0(Ind, Unvisited, Next, R), % delete and store Ind^th element
   at(AdjMat, Current, Next, D),
   NewDist is D+AccD,
@@ -121,7 +70,7 @@ ant_tour(Unvisited, PherMatr, AdjMat, Current, AccD, Dist, Acc, Visited) :-
 % calculate transition probabilities based on pheromones and distance
 % TODO I'm not 100% sure if this is correct (might be reversed results) Fixed?
 % TODO after some runs I'm pretty sure it's reversed
-trans_prob(Lst, PherMatr, AdjMat, Current, Probs) :- 
+trans_prob(Lst, PherMatr, AdjMat, Current, Probs) :-
   numerators(Lst, PherMatr, AdjMat, Current, Numerators), % get numerators
   sumlist(Numerators, Denom), % get denominator
   maplist(divide(Denom), Numerators, Probs).
@@ -142,9 +91,9 @@ numerators(Lst, PherMatr, AdjMat, Current, Numerators) :-
 
 numerators([], _, _, _, N, N).
 
-numerators([H|T], PherMatr, AdjMat, Current, Acc, Numerators) :- 
+numerators([H|T], PherMatr, AdjMat, Current, Acc, Numerators) :-
   at(PherMatr, Current, H, Tij),
-  at(AdjMat, Current, H, Dij), 
+  at(AdjMat, Current, H, Dij),
   NH is Tij/Dij,
   numerators(T, PherMatr, AdjMat, Current, [NH|Acc], Numerators).
 
@@ -160,7 +109,7 @@ make_sq_ones_matrix(N, Matrix) :-
 
 make_ones_matrix(_, N, []) :-
     N =< 0,
-    !. 
+    !.
 make_ones_matrix(M, N, [R|Rs]) :-
     make_ones_list(M, R),
     N2 is N - 1,
@@ -176,13 +125,21 @@ make_ones_list(N, [1|Rest]) :-
     make_ones_list(N2, Rest).
 
 % make list of incremental numbers
-make_dec_list(N, []) :-
-    N =< 0,
-    !.
-make_dec_list(N, [N2|Rest]) :-
-    N >= 0,
-    N2 is N - 1,
-    make_dec_list(N2, Rest).
+%make_dec_list(N, []) :-
+%    N =< 0,
+%    !.
+%make_dec_list(N, [N2|Rest]) :-
+%    N >= 0,
+%    N2 is N - 1,
+%    make_dec_list(N2, Rest).
+
+
+make_inc_list(N, L) :-
+  make_inc_list(N, 0, L).
+make_inc_list(N, N, []) :- !.
+make_inc_list(N, Acc, [Acc|L]) :-
+  A is Acc+1,
+  make_inc_list(N, A, L).
 
 % update pheromone for a full colony tour :)
 update_pheromone_full([], [], P, P).
