@@ -8,14 +8,13 @@
 %ant_tour([], _, _, _, _).
 %ant_tour([H|R], _, _,
 
+% write_to_file([(0,0),(3,4),(2,3)],30,20).
 write_to_file(Cities, NumIt, NumAnts) :-
-    aco(Cities, NumIt, NumAnts, PM, P, D),
+    aco(Cities, NumIt, NumAnts, PM, _, _),
     open('file.txt',write, Stream),
     (   write(Stream, PM),
         write(Stream, '\n'),
         write(Stream, Cities), fail
-        %write(Stream, '\n'),
-        %write(Stream, D), fail
     ;   true
     ),
     close(Stream).
