@@ -90,9 +90,7 @@ trans_prob(Lst, PherMatr, AdjMat, Current, Probs) :-
 % helper function for maplist
 divide(V, A, B) :- B is A/V.
 
-% tmp TODO
-% make_sq_ones_matrix(3, ph).
-% adjacency_matrix([(1,2), (0,0), (5,2)], d).
+% just some examples
 % [0,1,2], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[0, 5, 16], [5, 0, 29], [16, 29, 0]]
 
 % helper function for transmission probabilities
@@ -106,9 +104,11 @@ numerators([], _, _, _, N, N).
 numerators([H|T], PherMatr, AdjMat, Current, Acc, Numerators) :-
   at(PherMatr, Current, H, Tij),
   at(AdjMat, Current, H, Dij),
-  NH is Tij/Dij,
+  weight_TD(Tij, Dij, NH),
   numerators(T, PherMatr, AdjMat, Current, [NH|Acc], Numerators).
 
+% numerator per time (weight for pheromone, weight for distance)
+weight_TD(Tij, Dij, NH) :- NH is Tij/Dij^2.
 
 % replace Ind^th item in Old with E (resulting list is New)
 replace(Ind, Old, E, New) :-
@@ -165,7 +165,7 @@ update_pheromone_full([H|Paths], [D|Dists], PherMatr, NewPherMatr) :-
 %         PherMat is the current pheromone matrix
 %         UpdatedPherMat is the updated pheromone matrix
 update_pheromone([X,Y], Dist, PherMat, UpdatedPherMat) :-
-  Decayed is 0.9^Dist,
+  decay_function(Dist, Decayed),
   at(PherMat, X, Y, Val),
   nth0(X, PherMat, XRow),
   NewVal is Val+Decayed,
@@ -173,13 +173,16 @@ update_pheromone([X,Y], Dist, PherMat, UpdatedPherMat) :-
   replace(X, PherMat, UpdatedRow, UpdatedPherMat).
 
 update_pheromone([X,Y|T], Dist, PherMat, UpdatedPherMat) :-
-  Decayed is 0.9^Dist,
+  decay_function(Dist, Decayed),
   at(PherMat, X, Y, Val),
   nth0(X, PherMat, XRow),
   NewVal is Val+Decayed,
   replace(Y, XRow, NewVal, UpdatedRow),
   replace(X, PherMat, UpdatedRow, UPM),
   update_pheromone([Y|T], Dist, UPM, UpdatedPherMat).
+
+% what to add to pheromones
+decay_function(Dist, Decayed) :- Decayed is 1/Dist.
 
 % Returns the value at specific element
 % 0_based indexing
