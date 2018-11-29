@@ -2,12 +2,6 @@
 
 :- use_module(library(random)).
 
-% unvisited cities (indices), pheromone matrix, distance so far, current city, adjacency matrix
-% Paths is list of paths (as tuples) so far traversed
-%ant_tour(Unvisited, PherMatr, Dist, Current, AM, Paths)
-%ant_tour([], _, _, _, _).
-%ant_tour([H|R], _, _,
-
 % write_to_file([(0,0),(3,4),(2,3)],30,20).
 write_to_file(Cities, NumIt, NumAnts) :-
     aco(Cities, NumIt, NumAnts, PM, _, _),
@@ -75,7 +69,6 @@ ant_tour(Unvisited, PherMatr, AdjMat, Current, AccD, Dist, Acc, Visited) :-
   at(AdjMat, Current, Next, D),
   NewDist is D+AccD,
   ant_tour(R, PherMatr, AdjMat, Next, NewDist, Dist, [Next|Acc], Visited).
-
 
 %%%% HELPER FUNCTIONS %%%%
 % calculate transition probabilities based on pheromones and distance
